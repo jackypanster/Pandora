@@ -103,7 +103,7 @@ public final class Pandora {
             }
             throw new PandoraException(response.toString());
         } catch (IOException e) {
-            throw new PandoraException(e);
+            throw new PandoraException("Failed to make HTTP POST", e);
         }
     }
 
@@ -127,10 +127,11 @@ public final class Pandora {
                 checkPhoneNum(value);
             }
 
+            String text = value.trim();
             String url = getEncodeEndpoint(configManager.getHost(), type);
-            logger.debug("[ENCODE] " + url + ", " + maskString(value.trim(), 1, 7, '*'));
-            String result = post(url, value.trim());
-            logger.debug("[RESULT] " + result);
+            logger.debug(url + "," + maskString(text, 1, 7, '*'));
+            String result = post(url, text);
+            logger.debug(result);
             Gson gson = new Gson();
             EncodeResult encodeResult = gson.fromJson(result, EncodeResult.class);
             if (encodeResult.errLevel == 0 && encodeResult.status == 10000) {
@@ -150,12 +151,12 @@ public final class Pandora {
             checkEmpty(cipher, "cipher");
 
             String url = getDecodeEndpoint(configManager.getHost());
-            logger.debug("[DECODE] " + url + ", " + cipher.trim());
+            logger.debug(url + "," + cipher.trim());
             String result = post(url, cipher.trim());
             Gson gson = new Gson();
             DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
             if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
-                logger.debug("[RESULT] " + maskString(decodeResult.data, 1, 7, '*'));
+                logger.debug(maskString(decodeResult.data, 1, 7, '*'));
                 return decodeResult.data;
             } else {
                 throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
