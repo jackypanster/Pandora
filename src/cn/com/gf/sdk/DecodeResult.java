@@ -1,9 +1,6 @@
 package cn.com.gf.sdk;
 
-class DecodeResult {
-    int errLevel;
-    int status;
-    String message;
+class DecodeResult extends Result{
     String data;
 
     DecodeResult() {

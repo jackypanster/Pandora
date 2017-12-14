@@ -1,9 +1,6 @@
 package cn.com.gf.sdk;
 
-class EncodeResult {
-    int errLevel;
-    int status;
-    String message;
+class EncodeResult extends Result {
     ResultData data;
 
     EncodeResult() {
