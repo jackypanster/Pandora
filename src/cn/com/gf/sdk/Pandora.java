@@ -14,11 +14,14 @@ import java.io.IOException;
 public final class Pandora {
     private static final String regex = "\\d+";
     private static final String REQUEST_ID_HEADER = "X-DenCode-Request-Id";
-    private static final String API_TOKEN_HEADER = "X-GF-DenCode-API-Token";
-    private static final MediaType PLAIN = MediaType.parse("text/plain;charset=UTF-8");
-    private static final Object lockObj = new Object();
+    private static final String API_TOKEN_HEADER = "X-DenCode-Token";
     private static final String ENCODE_URL = "http://%s/api/secure/dencode/1.0.0/public/encode?infoType=%s";
     private static final String DECODE_URL = "http://%s/api/secure/dencode/1.0.0/public/decode";
+    private static final String ERROR_MESSAGE = "status %s: %s";
+
+    private static final MediaType PLAIN = MediaType.parse("text/plain;charset=UTF-8");
+    private static final Object lockObj = new Object();
+
     private static Pandora instance;
 
     private OkHttpClient client;
@@ -27,7 +30,6 @@ public final class Pandora {
 
     private static String maskString(String strText, int start, int end, char maskChar)
             throws PandoraException {
-
         if (strText == null || strText.equals(""))
             return "";
 
@@ -46,7 +48,6 @@ public final class Pandora {
             return strText;
 
         StringBuilder sbMaskString = new StringBuilder(maskLength);
-
         for (int i = 0; i < maskLength; i++) {
             sbMaskString.append(maskChar);
         }
@@ -134,7 +135,7 @@ public final class Pandora {
         if (encodeResult.errLevel == 0 && encodeResult.status == 10000) {
             return encodeResult.data.hashKey;
         } else {
-            throw new PandoraException(encodeResult.status + ":" + encodeResult.message);
+            throw new PandoraException(String.format(ERROR_MESSAGE, encodeResult.status, encodeResult.message));
         }
     }
 
@@ -151,7 +152,7 @@ public final class Pandora {
             logger.debug("[RESULT] " + maskString(decodeResult.data, 1, 7, '*'));
             return decodeResult.data;
         } else {
-            throw new PandoraException(decodeResult.status + ":" + decodeResult.message);
+            throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
         }
     }
 

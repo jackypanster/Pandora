@@ -5,7 +5,6 @@ class Main {
         try {
             Pandora instance = Pandora.getInstance();
             String result = instance.encode(InfoType.PHONE, "13751761288");
-            System.out.println(result);
 
             String phone = instance.decode(result);
             System.out.println(phone);
