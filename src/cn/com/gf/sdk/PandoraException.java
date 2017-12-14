@@ -8,4 +8,8 @@ public class PandoraException extends Exception {
     PandoraException(String message, Throwable cause) {
         super(message, cause);
     }
+
+    PandoraException(Throwable cause) {
+        super(cause);
+    }
 }

@@ -39,8 +39,9 @@ public final class Pandora {
         if (end > strText.length())
             end = strText.length();
 
-        if (start > end)
+        if (start > end) {
             throw new PandoraException("End index cannot be greater than start index");
+        }
 
         int maskLength = end - start;
 
@@ -102,8 +103,7 @@ public final class Pandora {
             }
             throw new PandoraException(response.toString());
         } catch (IOException e) {
-            logger.error("Failed to post " + content, e);
-            throw new PandoraException("Failed to post " + content, e);
+            throw new PandoraException(e);
         }
     }
 
@@ -116,43 +116,53 @@ public final class Pandora {
     }
 
     public String encode(String type, String value) throws PandoraException {
-        checkNull(type, "type");
-        checkEmpty(type, "type");
-        checkNull(value, "value");
-        checkEmpty(value, "value");
-        InfoType.check(type);
+        try {
+            checkNull(type, "type");
+            checkEmpty(type, "type");
+            checkNull(value, "value");
+            checkEmpty(value, "value");
+            InfoType.check(type);
 
-        if (type.equals(InfoType.PHONE)) {
-            checkPhoneNum(value);
-        }
+            if (type.equals(InfoType.PHONE)) {
+                checkPhoneNum(value);
+            }
 
-        String url = getEncodeEndpoint(configManager.getHost(), type);
-        logger.debug("[ENCODE] " + url + ", " + maskString(value.trim(), 1, 7, '*'));
-        String result = post(url, value.trim());
-        logger.debug("[RESULT] " + result);
-        Gson gson = new Gson();
-        EncodeResult encodeResult = gson.fromJson(result, EncodeResult.class);
-        if (encodeResult.errLevel == 0 && encodeResult.status == 10000) {
-            return encodeResult.data.hashKey;
-        } else {
-            throw new PandoraException(String.format(ERROR_MESSAGE, encodeResult.status, encodeResult.message));
+            String url = getEncodeEndpoint(configManager.getHost(), type);
+            logger.debug("[ENCODE] " + url + ", " + maskString(value.trim(), 1, 7, '*'));
+            String result = post(url, value.trim());
+            logger.debug("[RESULT] " + result);
+            Gson gson = new Gson();
+            EncodeResult encodeResult = gson.fromJson(result, EncodeResult.class);
+            if (encodeResult.errLevel == 0 && encodeResult.status == 10000) {
+                return encodeResult.data.hashKey;
+            } else {
+                throw new PandoraException(String.format(ERROR_MESSAGE, encodeResult.status, encodeResult.message));
+            }
+        } catch (PandoraException e) {
+            logger.error(e.getMessage(), e);
+            throw e;
         }
     }
 
     public String decode(String cipher) throws PandoraException {
-        checkNull(cipher, "cipher");
-        checkEmpty(cipher, "cipher");
+        try {
+            checkNull(cipher, "cipher");
+            checkEmpty(cipher, "cipher");
 
-        String url = getDecodeEndpoint(configManager.getHost());
-        logger.debug("[DECODE] " + url + ", " + cipher.trim());
-        String result = post(url, cipher.trim());
-        Gson gson = new Gson();
-        DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
-        if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
-            logger.debug("[RESULT] " + maskString(decodeResult.data, 1, 7, '*'));
-            return decodeResult.data;
-        } else {
-            throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
+            String url = getDecodeEndpoint(configManager.getHost());
+            logger.debug("[DECODE] " + url + ", " + cipher.trim());
+            String result = post(url, cipher.trim());
+            Gson gson = new Gson();
+            DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
+            if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
+                logger.debug("[RESULT] " + maskString(decodeResult.data, 1, 7, '*'));
+                return decodeResult.data;
+            } else {
+                throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
+            }
+        } catch (PandoraException e) {
+            logger.error(e);
+            throw e;
         }
     }
 
