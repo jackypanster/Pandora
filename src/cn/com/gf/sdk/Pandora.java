@@ -27,6 +27,8 @@ public final class Pandora {
     private OkHttpClient client;
     private Logger logger;
     private ConfigManager configManager;
+    private String host;
+    private String appId;
 
     private static String maskString(String strText, int start, int end, char maskChar)
             throws PandoraException {
@@ -88,7 +90,7 @@ public final class Pandora {
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader(REQUEST_ID_HEADER, UUID.randomUUID().toString())
-                .addHeader(API_TOKEN_HEADER, configManager.getAppId())
+                .addHeader(API_TOKEN_HEADER, this.appId)
                 .post(body)
                 .build();
         try {
@@ -128,8 +130,8 @@ public final class Pandora {
             }
 
             String text = value.trim();
-            String url = getEncodeEndpoint(configManager.getHost(), type);
-            logger.debug(url + "," + maskString(text, 1, 7, '*'));
+            String url = getEncodeEndpoint(this.host, type);
+            logger.debug(url + ", " + maskString(text, 1, 5, '*'));
             String result = post(url, text);
             logger.debug(result);
             Gson gson = new Gson();
@@ -150,13 +152,13 @@ public final class Pandora {
             checkNull(cipher, "cipher");
             checkEmpty(cipher, "cipher");
 
-            String url = getDecodeEndpoint(configManager.getHost());
-            logger.debug(url + "," + cipher.trim());
+            String url = getDecodeEndpoint(this.host);
+            logger.debug(url + ", " + cipher.trim());
             String result = post(url, cipher.trim());
             Gson gson = new Gson();
             DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
             if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
-                logger.debug(maskString(decodeResult.data, 1, 7, '*'));
+                logger.debug(maskString(decodeResult.data, 1, 5, '*'));
                 return decodeResult.data;
             } else {
                 throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
@@ -167,17 +169,23 @@ public final class Pandora {
         }
     }
 
-    public static Pandora getInstance() throws PandoraException {
+    public static Pandora getInstance(String host, String appId) throws PandoraException {
+        checkNull(host, "host");
+        checkEmpty(host, "host");
+        checkNull(appId, "appId");
+        checkEmpty(appId, "appId");
         if (instance == null) {
             synchronized (lockObj) {
                 if (instance == null) {
                     instance = new Pandora();
+                    instance.configManager = ConfigManager.getInstance();
+                    instance.logger = Logger.getLogger(Pandora.class);
+                    instance.client = new OkHttpClient();
+                    instance.appId = appId;
+                    instance.host = host;
                 }
             }
         }
-        instance.configManager = ConfigManager.getInstance();
-        instance.logger = Logger.getLogger(Pandora.class);
-        instance.client = new OkHttpClient();
         return instance;
     }
 }

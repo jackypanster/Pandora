@@ -4,7 +4,7 @@ class Main {
     public static void main(String[] args) {
         try {
             // initialize the SDK
-            Pandora instance = Pandora.getInstance();
+            Pandora instance = Pandora.getInstance("10.2.130.155:32030", "appId");
             // encode the given text
             String result = instance.encode(InfoType.PHONE, "13751761288");
 
