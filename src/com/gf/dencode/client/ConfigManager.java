@@ -34,7 +34,7 @@ final class ConfigManager {
         return this.formatDecodeUrl;
     }
 
-    public static ConfigManager getInstance() throws PandoraException {
+    public static ConfigManager getInstance() throws IOException {
         if (instance == null) {
             synchronized (lockObj) {
                 if (instance == null) {
@@ -45,33 +45,20 @@ final class ConfigManager {
         return instance;
     }
 
-    private ConfigManager() throws PandoraException {
+    private ConfigManager() throws IOException {
         Properties prop = new Properties();
-        InputStream input = null;
-
-        try {
-            input = ConfigManager.class.getClassLoader().getResourceAsStream(CONFIG_FILE);
-            if (input == null) {
-                throw new PandoraException("Failed to find " + CONFIG_FILE);
-            }
-            // load a properties file
-            prop.load(input);
-            // get the property value
-            this.headerApiToken = prop.getProperty("HeaderApiToken");
-            this.headerRequestId = prop.getProperty("HeaderRequestId");
-            this.headerContentType = prop.getProperty("HeaderContentType");
-            this.formatEncodeUrl = prop.getProperty("FormatEncodeUrl");
-            this.formatDecodeUrl = prop.getProperty("FormatDecodeUrl");
-        } catch (IOException e) {
-            throw new PandoraException("Failed to read property", e);
-        } finally {
-            if (input != null) {
-                try {
-                    input.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
+        InputStream input = ConfigManager.class.getClassLoader().getResourceAsStream(CONFIG_FILE);
+        if (input == null) {
+            throw new IOException("Failed to find " + CONFIG_FILE);
         }
+        // load a properties file
+        prop.load(input);
+        // get the property value
+        this.headerApiToken = prop.getProperty("HeaderApiToken");
+        this.headerRequestId = prop.getProperty("HeaderRequestId");
+        this.headerContentType = prop.getProperty("HeaderContentType");
+        this.formatEncodeUrl = prop.getProperty("FormatEncodeUrl");
+        this.formatDecodeUrl = prop.getProperty("FormatDecodeUrl");
+        input.close();
     }
 }

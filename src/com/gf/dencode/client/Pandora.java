@@ -24,9 +24,9 @@ public final class Pandora {
     private static String ENCODE_URL;
     private static String DECODE_URL;
     private static MediaType mediaType;
+    private static OkHttpClient client;
     private static Pandora instance;
 
-    private OkHttpClient client;
     private String host;
     private String appId;
 
@@ -83,6 +83,11 @@ public final class Pandora {
         if (object == null) {
             throw new PandoraException(message);
         }
+    }
+
+    private Pandora(String host, String appId) {
+        this.host = host;
+        this.appId = appId;
     }
 
     private String post(String url, String content) throws PandoraException {
@@ -164,7 +169,7 @@ public final class Pandora {
                 throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
             }
         } catch (PandoraException e) {
-            logger.error(e);
+            logger.error(e.getMessage(), e);
             throw e;
         }
     }
@@ -177,24 +182,25 @@ public final class Pandora {
         if (instance == null) {
             synchronized (lockObj) {
                 if (instance == null) {
-                    ConfigManager configManager = ConfigManager.getInstance();
-                    REQUEST_ID_HEADER = configManager.getHeaderRequestId();
-                    API_TOKEN_HEADER = configManager.getHeaderApiToken();
-                    ENCODE_URL = configManager.getFormatEncodeUrl();
-                    DECODE_URL = configManager.getFormatDecodeUrl();
-                    mediaType = MediaType.parse(configManager.getHeaderContentType());
-
-                    instance = new Pandora();
-                    instance.appId = appId;
-                    instance.host = host;
+                    try {
+                        ConfigManager configManager = ConfigManager.getInstance();
+                        REQUEST_ID_HEADER = configManager.getHeaderRequestId();
+                        API_TOKEN_HEADER = configManager.getHeaderApiToken();
+                        ENCODE_URL = configManager.getFormatEncodeUrl();
+                        DECODE_URL = configManager.getFormatDecodeUrl();
+                        mediaType = MediaType.parse(configManager.getHeaderContentType());
+                    } catch (IOException e) {
+                        logger.error(e.getMessage(), e);
+                        throw new PandoraException(e);
+                    }
+                    instance = new Pandora(host, appId);
                     if (debug) {
-                        instance.client = new OkHttpClient.Builder().addNetworkInterceptor(new LoggingInterceptor()).build();
+                        client = new OkHttpClient.Builder().addNetworkInterceptor(new LoggingInterceptor()).build();
                         logger.setLevel(Level.DEBUG);
                     } else {
-                        instance.client = new OkHttpClient();
+                        client = new OkHttpClient();
                         logger.setLevel(Level.INFO);
                     }
-
                 }
             }
         }
