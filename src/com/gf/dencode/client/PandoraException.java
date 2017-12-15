@@ -1,4 +1,4 @@
-package cn.com.gf.sdk;
+package com.gf.dencode.client;
 
 public class PandoraException extends Exception {
     PandoraException(String message) {

@@ -1,4 +1,4 @@
-package cn.com.gf.sdk;
+package com.gf.dencode.client;
 
 public final class InfoType {
     public static final String PHONE = "phone";

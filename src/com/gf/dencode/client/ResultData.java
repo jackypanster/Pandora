@@ -1,4 +1,4 @@
-package cn.com.gf.sdk;
+package com.gf.dencode.client;
 
 class ResultData {
     boolean repeat;

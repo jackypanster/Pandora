@@ -1,4 +1,4 @@
-package cn.com.gf.sdk;
+package com.gf.dencode.client;
 
 import java.io.IOException;
 import java.io.InputStream;

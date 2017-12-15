@@ -1,4 +1,4 @@
-package cn.com.gf.sdk;
+package com.gf.dencode.client;
 
 import com.google.gson.Gson;
 import okhttp3.RequestBody;
