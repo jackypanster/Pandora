@@ -7,6 +7,8 @@ import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Response;
 import org.apache.log4j.Logger;
+import okhttp3.Interceptor;
+import org.apache.log4j.Level;
 
 import java.util.UUID;
 import java.io.IOException;
@@ -19,14 +21,14 @@ public final class Pandora {
     private static final String DECODE_URL = "http://%s/api/secure/dencode/1.0.0/public/decode";
     private static final String ERROR_MESSAGE = "status %s: %s";
 
+    private static final Logger logger = Logger.getLogger(Pandora.class);
     private static final MediaType PLAIN = MediaType.parse("text/plain;charset=UTF-8");
     private static final Object lockObj = new Object();
 
     private static Pandora instance;
 
     private OkHttpClient client;
-    private Logger logger;
-    private ConfigManager configManager;
+    //private ConfigManager configManager;
     private String host;
     private String appId;
 
@@ -131,9 +133,9 @@ public final class Pandora {
 
             String text = value.trim();
             String url = getEncodeEndpoint(this.host, type);
-            logger.debug(url + ", " + maskString(text, 3, 7, '*'));
+            logger.info(url + ", " + maskString(text, 3, 7, '*'));
             String result = post(url, text);
-            logger.debug(result);
+            logger.info(result);
             Gson gson = new Gson();
             EncodeResult encodeResult = gson.fromJson(result, EncodeResult.class);
             if (encodeResult.errLevel == 0 && encodeResult.status == 10000) {
@@ -153,12 +155,12 @@ public final class Pandora {
             checkEmpty(cipher, "cipher");
 
             String url = getDecodeEndpoint(this.host);
-            logger.debug(url + ", " + cipher.trim());
+            logger.info(url + ", " + cipher.trim());
             String result = post(url, cipher.trim());
             Gson gson = new Gson();
             DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
             if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
-                logger.debug(maskString(decodeResult.data, 3, 7, '*'));
+                logger.info(maskString(decodeResult.data, 3, 7, '*'));
                 return decodeResult.data;
             } else {
                 throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
@@ -169,7 +171,7 @@ public final class Pandora {
         }
     }
 
-    public static Pandora getInstance(String host, String appId) throws PandoraException {
+    public static Pandora getInstance(String host, String appId, boolean debug) throws PandoraException {
         checkNull(host, "host");
         checkEmpty(host, "host");
         checkNull(appId, "appId");
@@ -178,14 +180,38 @@ public final class Pandora {
             synchronized (lockObj) {
                 if (instance == null) {
                     instance = new Pandora();
-                    instance.configManager = ConfigManager.getInstance();
-                    instance.logger = Logger.getLogger(Pandora.class);
-                    instance.client = new OkHttpClient();
+                    //instance.configManager = ConfigManager.getInstance();
                     instance.appId = appId;
                     instance.host = host;
+                    if (debug) {
+                        instance.client = new OkHttpClient.Builder().addNetworkInterceptor(new LoggingInterceptor()).build();
+                        logger.setLevel(Level.DEBUG);
+                    } else {
+                        instance.client = new OkHttpClient();
+                        logger.setLevel(Level.INFO);
+                    }
                 }
             }
         }
         return instance;
+    }
+
+    static class LoggingInterceptor implements Interceptor {
+        @Override
+        public Response intercept(Interceptor.Chain chain) throws IOException {
+            Request request = chain.request();
+
+            long t1 = System.nanoTime();
+            logger.debug(String.format("Sending request %s on %s%n%s",
+                    request.url(), chain.connection(), request.headers()));
+
+            Response response = chain.proceed(request);
+
+            long t2 = System.nanoTime();
+            logger.debug(String.format("Received response for %s in %.1fms%n%s",
+                    response.request().url(), (t2 - t1) / 1e6d, response.headers()));
+
+            return response;
+        }
     }
 }
