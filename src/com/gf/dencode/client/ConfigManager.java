@@ -8,15 +8,30 @@ final class ConfigManager {
     private static final String CONFIG_FILE = "config.properties";
     private static final Object lockObj = new Object();
     private static ConfigManager instance;
-    private String host;
-    private String appId;
+    private String headerApiToken;
+    private String headerRequestId;
+    private String headerContentType;
+    private String formatEncodeUrl;
+    private String formatDecodeUrl;
 
-    public String getAppId() {
-        return this.appId;
+    public String getHeaderRequestId() {
+        return this.headerRequestId;
     }
 
-    public String getHost() {
-        return this.host;
+    public String getHeaderApiToken() {
+        return this.headerApiToken;
+    }
+
+    public String getHeaderContentType() {
+        return this.headerContentType;
+    }
+
+    public String getFormatEncodeUrl() {
+        return this.formatEncodeUrl;
+    }
+
+    public String getFormatDecodeUrl() {
+        return this.formatDecodeUrl;
     }
 
     public static ConfigManager getInstance() throws PandoraException {
@@ -42,8 +57,11 @@ final class ConfigManager {
             // load a properties file
             prop.load(input);
             // get the property value
-            this.host = prop.getProperty("host");
-            this.appId = prop.getProperty("appid");
+            this.headerApiToken = prop.getProperty("HeaderApiToken");
+            this.headerRequestId = prop.getProperty("HeaderRequestId");
+            this.headerContentType = prop.getProperty("HeaderContentType");
+            this.formatEncodeUrl = prop.getProperty("FormatEncodeUrl");
+            this.formatDecodeUrl = prop.getProperty("FormatDecodeUrl");
         } catch (IOException e) {
             throw new PandoraException("Failed to read property", e);
         } finally {

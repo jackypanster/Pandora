@@ -14,21 +14,19 @@ import java.util.UUID;
 import java.io.IOException;
 
 public final class Pandora {
-    private static final String regex = "\\d+";
-    private static final String REQUEST_ID_HEADER = "X-DenCode-Request-Id";
-    private static final String API_TOKEN_HEADER = "X-DenCode-Token";
-    private static final String ENCODE_URL = "http://%s/api/secure/dencode/1.0.0/public/encode?infoType=%s";
-    private static final String DECODE_URL = "http://%s/api/secure/dencode/1.0.0/public/decode";
-    private static final String ERROR_MESSAGE = "status %s: %s";
-
-    private static final Logger logger = Logger.getLogger(Pandora.class);
-    private static final MediaType PLAIN = MediaType.parse("text/plain;charset=UTF-8");
     private static final Object lockObj = new Object();
+    private static final Logger logger = Logger.getLogger(Pandora.class);
+    private static final String ERROR_MESSAGE = "status %s: %s";
+    private static final String regex = "\\d+";
 
+    private static String REQUEST_ID_HEADER;
+    private static String API_TOKEN_HEADER;
+    private static String ENCODE_URL;
+    private static String DECODE_URL;
+    private static MediaType mediaType;
     private static Pandora instance;
 
     private OkHttpClient client;
-    //private ConfigManager configManager;
     private String host;
     private String appId;
 
@@ -88,7 +86,7 @@ public final class Pandora {
     }
 
     private String post(String url, String content) throws PandoraException {
-        RequestBody body = RequestBody.create(PLAIN, content);
+        RequestBody body = RequestBody.create(mediaType, content);
         Request request = new Request.Builder()
                 .url(url)
                 .addHeader(REQUEST_ID_HEADER, UUID.randomUUID().toString())
@@ -179,8 +177,14 @@ public final class Pandora {
         if (instance == null) {
             synchronized (lockObj) {
                 if (instance == null) {
+                    ConfigManager configManager = ConfigManager.getInstance();
+                    REQUEST_ID_HEADER = configManager.getHeaderRequestId();
+                    API_TOKEN_HEADER = configManager.getHeaderApiToken();
+                    ENCODE_URL = configManager.getFormatEncodeUrl();
+                    DECODE_URL = configManager.getFormatDecodeUrl();
+                    mediaType = MediaType.parse(configManager.getHeaderContentType());
+
                     instance = new Pandora();
-                    //instance.configManager = ConfigManager.getInstance();
                     instance.appId = appId;
                     instance.host = host;
                     if (debug) {
@@ -190,6 +194,7 @@ public final class Pandora {
                         instance.client = new OkHttpClient();
                         logger.setLevel(Level.INFO);
                     }
+
                 }
             }
         }
