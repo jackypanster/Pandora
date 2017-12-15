@@ -131,7 +131,7 @@ public final class Pandora {
 
             String text = value.trim();
             String url = getEncodeEndpoint(this.host, type);
-            logger.debug(url + ", " + maskString(text, 1, 5, '*'));
+            logger.debug(url + ", " + maskString(text, 3, 7, '*'));
             String result = post(url, text);
             logger.debug(result);
             Gson gson = new Gson();
@@ -158,7 +158,7 @@ public final class Pandora {
             Gson gson = new Gson();
             DecodeResult decodeResult = gson.fromJson(result, DecodeResult.class);
             if (decodeResult.errLevel == 0 && decodeResult.status == 10001) {
-                logger.debug(maskString(decodeResult.data, 1, 5, '*'));
+                logger.debug(maskString(decodeResult.data, 3, 7, '*'));
                 return decodeResult.data;
             } else {
                 throw new PandoraException(String.format(ERROR_MESSAGE, decodeResult.status, decodeResult.message));
